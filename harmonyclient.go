@@ -60,9 +60,6 @@ func (C *Client) Containers() (*[]Container, error) {
 
 // ContainersAdd will create a new Container resource
 func (C *Client) ContainersAdd(c *Container) (*Container, error) {
-	// set the resource type
-	c.Type = "containers"
-
 	// marshal the resource
 	payload, err := jsonapi.MarshalToJSON(c)
 	if err != nil {
