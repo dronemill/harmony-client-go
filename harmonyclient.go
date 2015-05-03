@@ -39,27 +39,59 @@ func NewHarmonyClient(conf Config) (c *Client, err error) {
 func (C *Client) Containers() (*[]Container, error) {
 	m := map[string]string{}
 
-	payload := new(map[string]interface{})
-	if err := C.get("/containers", m, payload); err != nil {
+	response := new(map[string]interface{})
+	if err := C.get("/containers", m, response); err != nil {
 		return nil, err
 	}
 
-	if err := (*payload)["errors"]; err != nil {
+	if err := (*response)["errors"]; err != nil {
 		err := err.([]interface{})
 		e := err[0].(map[string]interface{})
 
 		return nil, fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
 	}
 
-	// fmt.Printf("\n\nHERE: %+v\n\n\n", payload)
+	// fmt.Printf("\n\nHERE: %+v\n\n\n", response)
 	var containers []Container
-	err := jsonapi.Unmarshal(*payload, &containers)
+	err := jsonapi.Unmarshal(*response, &containers)
 
 	return &containers, err
 }
 
-func (C *Client) get(url string, params map[string]string, payload interface{}) error {
+// ContainersAdd will create a new Container resource
+func (C *Client) ContainersAdd(c *Container) (*Container, error) {
+	// set the resource type
+	c.Type = "containers"
 
+	// marshal the resource
+	payload, err := jsonapi.MarshalToJSON(c)
+	if err != nil {
+		return nil, err
+	}
+
+	// execute the request
+	m := map[string]string{}
+	response := new(map[string]interface{})
+	if err := C.post("/containers", m, payload, response); err != nil {
+		return nil, err
+	}
+
+	// handle api errors
+	if err := (*response)["errors"]; err != nil {
+		err := err.([]interface{})
+		e := err[0].(map[string]interface{})
+
+		return nil, fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
+	}
+
+	// unmarshal the response
+	var containers []Container
+	err = jsonapi.Unmarshal(*response, &containers)
+
+	return &containers[0], err
+}
+
+func (C *Client) get(url string, params map[string]string, response interface{}) error {
 	// build and execute the request the resource from the api server
 	buf, err := C.request("GET", url, params, nil)
 
@@ -69,12 +101,19 @@ func (C *Client) get(url string, params map[string]string, payload interface{}) 
 	}
 
 	// decode the json, checking for errors if they exist
-	err = json.Unmarshal(buf, payload)
+	err = json.Unmarshal(buf, response)
 	if err != nil {
 		return fmt.Errorf("json unmarshal error: %s", err)
 	}
 
 	return nil
+}
+
+// post will execute a post request
+func (C *Client) post(url string, params map[string]string, payload []byte, response interface{}) error {
+	body := bytes.NewReader(payload)
+	buf, err := C.request("POST", url, params, body)
+	return C.handleResponse(url, buf, err, response)
 }
 
 func (C *Client) request(requestType, urlSuffix string, params map[string]string, body io.Reader) ([]byte, error) {
@@ -123,4 +162,21 @@ func (C *Client) request(requestType, urlSuffix string, params map[string]string
 
 	// read and return the response body buffer
 	return ioutil.ReadAll(resp.Body)
+}
+
+func (C *Client) handleResponse(url string, payload []byte, err error, unmarshalInto interface{}) error {
+	// ensure that we didnt fail making the request
+	if err != nil {
+		return fmt.Errorf("Failed requesting %s: %s", url, err)
+	}
+
+	// fmt.Printf("%s\n\n", string(payload))
+
+	// decode the json, checking for errors if they exist
+	err = json.Unmarshal(payload, unmarshalInto)
+	if err != nil {
+		return fmt.Errorf("json unmarshal error: %s", err)
+	}
+
+	return nil
 }
