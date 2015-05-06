@@ -88,6 +88,37 @@ func (C *Client) ContainersAdd(c *Container) (*Container, error) {
 	return &containers[0], err
 }
 
+// MachineByName will fetch a machine by its name
+func (C *Client) MachineByName(name string) (*Machine, error) {
+	// setup the filters
+	m := map[string]string{}
+	m["name"] = name
+
+	// execute the request
+	response := new(map[string]interface{})
+	if err := C.get("/machines", m, response); err != nil {
+		return nil, err
+	}
+
+	// handle api errors
+	if err := (*response)["errors"]; err != nil {
+		err := err.([]interface{})
+		e := err[0].(map[string]interface{})
+
+		return nil, fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
+	}
+
+	// unmarshal the response
+	var machines []Machine
+	err := jsonapi.Unmarshal(*response, &machines)
+
+	if len(machines) == 0 {
+		return nil, err
+	}
+
+	return &machines[0], err
+}
+
 func (C *Client) get(url string, params map[string]string, response interface{}) error {
 	// build and execute the request the resource from the api server
 	buf, err := C.request("GET", url, params, nil)
