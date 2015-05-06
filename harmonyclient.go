@@ -119,6 +119,36 @@ func (C *Client) MachineByName(name string) (*Machine, error) {
 	return &machines[0], err
 }
 
+// MachinesAdd will create a Harmony Machine resource
+func (C *Client) MachinesAdd(c *Machine) (*Machine, error) {
+	// marshal the resource
+	payload, err := jsonapi.MarshalToJSON(c)
+	if err != nil {
+		return nil, err
+	}
+
+	// execute the request
+	m := map[string]string{}
+	response := new(map[string]interface{})
+	if err := C.post("/machines", m, payload, response); err != nil {
+		return nil, err
+	}
+
+	// handle api errors
+	if err := (*response)["errors"]; err != nil {
+		err := err.([]interface{})
+		e := err[0].(map[string]interface{})
+
+		return nil, fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
+	}
+
+	// unmarshal the response
+	var machines []Machine
+	err = jsonapi.Unmarshal(*response, &machines)
+	fmt.Printf("%+v\n\n", machines)
+	return &machines[0], err
+}
+
 func (C *Client) get(url string, params map[string]string, response interface{}) error {
 	// build and execute the request the resource from the api server
 	buf, err := C.request("GET", url, params, nil)
