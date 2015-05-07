@@ -20,10 +20,20 @@ type Container struct {
 	CreatedAt  string `jsonapi:"name=created_at"`
 	UpdatedAt  string `jsonapi:"name=updated_at"`
 
-	ContainerEnvs    []ContainerEnv `json:"-"`
-	ContainerEnvsIDs []string       `json:"-"`
-	Machine          Machine        `json:"-"`
+	ContainerEnvs       []ContainerEnv    `json:"-"`
+	ContainerEnvsIDs    []string          `json:"-"`
+	ContainerVolumes    []ContainerVolume `json:"-"`
+	ContainerVolumesIDs []string          `json:"-"`
+	Machine             Machine           `json:"-"`
 }
+
+// "container_envs": { … },
+// "container_volumes": { … },
+// "container_nics": { … },
+// "container_dns": { … },
+// "container_exposes": { … },
+// "container_links": { … },
+// "container_publishs": { … },
 
 // GetID to satisfy jsonapi.MarshalIdentifier interface
 func (c Container) GetID() string {
@@ -43,17 +53,32 @@ func (c Container) GetReferences() []jsonapi.Reference {
 			Type: "container_envs",
 			Name: "container_envs",
 		},
+		{
+			Type: "container_volumes",
+			Name: "container_volumes",
+		},
 	}
 }
 
 // GetReferencedIDs to satisfy the jsonapi.MarshalLinkedRelations interface
 func (c Container) GetReferencedIDs() []jsonapi.ReferenceID {
 	result := []jsonapi.ReferenceID{}
+
+	// handle ContainerEnvs
 	for _, containerEnv := range c.ContainerEnvs {
 		result = append(result, jsonapi.ReferenceID{
 			ID:   containerEnv.ID,
 			Type: "container_envs",
 			Name: "container_envs",
+		})
+	}
+
+	// handle ContainerVolumes
+	for _, containerVolume := range c.ContainerVolumes {
+		result = append(result, jsonapi.ReferenceID{
+			ID:   containerVolume.ID,
+			Type: "container_volumes",
+			Name: "container_volumes",
 		})
 	}
 
@@ -63,8 +88,15 @@ func (c Container) GetReferencedIDs() []jsonapi.ReferenceID {
 // GetReferencedStructs to satisfy the jsonapi.MarhsalIncludedRelations interface
 func (c Container) GetReferencedStructs() []jsonapi.MarshalIdentifier {
 	result := []jsonapi.MarshalIdentifier{}
+
+	// handle ContainerEnvs
 	for key := range c.ContainerEnvs {
 		result = append(result, c.ContainerEnvs[key])
+	}
+
+	// handle ContainerVolumes
+	for key := range c.ContainerVolumes {
+		result = append(result, c.ContainerVolumes[key])
 	}
 
 	return result
@@ -85,6 +117,8 @@ func (c *Container) SetToOneReferenceID(name, ID string) error {
 func (c *Container) SetToManyReferenceIDs(name string, IDs []string) error {
 	if name == "container_envs" {
 		c.ContainerEnvsIDs = IDs
+	} else if name == "container_volumes" {
+		c.ContainerVolumesIDs = IDs
 	} else {
 		return errors.New("There is no to-many relationship with the name " + name)
 	}
@@ -96,6 +130,8 @@ func (c *Container) SetToManyReferenceIDs(name string, IDs []string) error {
 func (c *Container) AddToManyIDs(name string, IDs []string) error {
 	if name == "container_envs" {
 		c.ContainerEnvsIDs = append(c.ContainerEnvsIDs, IDs...)
+	} else if name == "container_volumes" {
+		c.ContainerVolumesIDs = append(c.ContainerVolumesIDs, IDs...)
 	} else {
 		return errors.New("There is no to-many relationship with the name " + name)
 	}
@@ -111,6 +147,15 @@ func (c *Container) DeleteToManyIDs(name string, IDs []string) error {
 				if ID == oldID {
 					// match, this ID must be removed
 					c.ContainerEnvs = append(c.ContainerEnvs[:pos], c.ContainerEnvs[pos+1:]...)
+				}
+			}
+		}
+	} else if name == "container_volumes" {
+		for _, ID := range IDs {
+			for pos, oldID := range c.ContainerVolumesIDs {
+				if ID == oldID {
+					// match, this ID must be removed
+					c.ContainerVolumes = append(c.ContainerVolumes[:pos], c.ContainerVolumes[pos+1:]...)
 				}
 			}
 		}
