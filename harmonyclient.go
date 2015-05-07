@@ -35,6 +35,28 @@ func NewHarmonyClient(conf Config) (c *Client, err error) {
 	return
 }
 
+// Container gets a container by ID
+func (C *Client) Container(ID string) (*Container, error) {
+	m := map[string]string{}
+
+	response := new(map[string]interface{})
+	if err := C.get(fmt.Sprintf("/containers/%s", ID), m, response); err != nil {
+		return nil, err
+	}
+
+	if err := (*response)["errors"]; err != nil {
+		err := err.([]interface{})
+		e := err[0].(map[string]interface{})
+
+		return nil, fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
+	}
+
+	var container Container
+	err := jsonapi.Unmarshal(*response, &container)
+
+	return &container, err
+}
+
 // Containers gets a list of all the containers
 func (C *Client) Containers() (*[]Container, error) {
 	m := map[string]string{}
