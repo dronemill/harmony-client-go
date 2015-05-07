@@ -22,6 +22,7 @@ type Container struct {
 
 	ContainerEnvs    []ContainerEnv `json:"-"`
 	ContainerEnvsIDs []string       `json:"-"`
+	Machine          Machine        `json:"-"`
 }
 
 // GetID to satisfy jsonapi.MarshalIdentifier interface
@@ -67,6 +68,17 @@ func (c Container) GetReferencedStructs() []jsonapi.MarshalIdentifier {
 	}
 
 	return result
+}
+
+// 	SetToOneReferenceID sets the reference ID and satifices jsonapi.UnmarshalToOneRelations interface
+func (c *Container) SetToOneReferenceID(name, ID string) error {
+	if name == "machine" {
+		// we can skip this, becase MachineID should alreadt be populated
+	} else {
+		return errors.New("There is no to-one relationship with name " + name)
+	}
+
+	return nil
 }
 
 // SetToManyReferenceIDs sets the sweets reference IDs and satisfies the jsonapi.UnmarshalToManyRelations interface
