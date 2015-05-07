@@ -58,6 +58,29 @@ func (C *Client) Containers() (*[]Container, error) {
 	return &containers, err
 }
 
+// Machines gets a list of all the machines
+func (C *Client) Machines() (*[]Machine, error) {
+	m := map[string]string{}
+
+	response := new(map[string]interface{})
+	if err := C.get("/machines", m, response); err != nil {
+		return nil, err
+	}
+
+	if err := (*response)["errors"]; err != nil {
+		err := err.([]interface{})
+		e := err[0].(map[string]interface{})
+
+		return nil, fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
+	}
+
+	// fmt.Printf("\n\nHERE: %+v\n\n\n", response)
+	var machines []Machine
+	err := jsonapi.Unmarshal(*response, &machines)
+
+	return &machines, err
+}
+
 // ContainersAdd will create a new Container resource
 func (C *Client) ContainersAdd(c *Container) (*Container, error) {
 	// marshal the resource
