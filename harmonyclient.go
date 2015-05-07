@@ -105,10 +105,10 @@ func (C *Client) ContainersAdd(c *Container) (*Container, error) {
 	}
 
 	// unmarshal the response
-	var containers []Container
-	err = jsonapi.Unmarshal(*response, &containers)
+	var container Container
+	err = jsonapi.Unmarshal(*response, &container)
 
-	return &containers[0], err
+	return &container, err
 }
 
 // MachineByName will fetch a machine by its name
@@ -132,14 +132,32 @@ func (C *Client) MachineByName(name string) (*Machine, error) {
 	}
 
 	// unmarshal the response
-	var machines []Machine
-	err := jsonapi.Unmarshal(*response, &machines)
+	var machine Machine
+	err := jsonapi.Unmarshal(*response, &machine)
 
-	if len(machines) == 0 {
+	return &machine, err
+}
+
+// Machine gets a machine by ID
+func (C *Client) Machine(ID string) (*Machine, error) {
+	m := map[string]string{}
+
+	response := new(map[string]interface{})
+	if err := C.get(fmt.Sprintf("/machines/%s", ID), m, response); err != nil {
 		return nil, err
 	}
 
-	return &machines[0], err
+	if err := (*response)["errors"]; err != nil {
+		err := err.([]interface{})
+		e := err[0].(map[string]interface{})
+
+		return nil, fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
+	}
+
+	var machine Machine
+	err := jsonapi.Unmarshal(*response, &machine)
+
+	return &machine, err
 }
 
 // MachinesAdd will create a Harmony Machine resource
@@ -166,10 +184,9 @@ func (C *Client) MachinesAdd(c *Machine) (*Machine, error) {
 	}
 
 	// unmarshal the response
-	var machines []Machine
-	err = jsonapi.Unmarshal(*response, &machines)
-	fmt.Printf("%+v\n\n", machines)
-	return &machines[0], err
+	var machine Machine
+	err = jsonapi.Unmarshal(*response, &machine)
+	return &machine, err
 }
 
 func (C *Client) get(url string, params map[string]string, response interface{}) error {
