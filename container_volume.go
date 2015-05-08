@@ -1,6 +1,6 @@
 package harmonyclient
 
-// ContainerVolume holds a container's environment variable
+// ContainerVolume holds a container's volume
 type ContainerVolume struct {
 	ID            string `jsonapi:"name=id"`
 	ContainerID   string `jsonapi:"name=container_id"`
