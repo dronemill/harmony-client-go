@@ -189,9 +189,9 @@ func (c Container) GetReferencedStructs() []jsonapi.MarshalIdentifier {
 		result = append(result, c.ContainerNics[key])
 	}
 
-	// handle ContainerLinks
-	for key := range c.ContainerLinks {
-		result = append(result, c.ContainerLinks[key])
+	// handle ContainerPublishes
+	for key := range c.ContainerPublishes {
+		result = append(result, c.ContainerPublishes[key])
 	}
 
 	// handle ContainerVolumes
@@ -225,8 +225,8 @@ func (c *Container) SetToManyReferenceIDs(name string, IDs []string) error {
 		c.ContainerLinksIDs = IDs
 	} else if name == "container_nics" {
 		c.ContainerNicsIDs = IDs
-	} else if name == "container_links" {
-		c.ContainerLinksIDs = IDs
+	} else if name == "container_publishes" {
+		c.ContainerPublishesIDs = IDs
 	} else if name == "container_volumes" {
 		c.ContainerVolumesIDs = IDs
 	} else {
@@ -248,8 +248,8 @@ func (c *Container) AddToManyIDs(name string, IDs []string) error {
 		c.ContainerLinksIDs = append(c.ContainerLinksIDs, IDs...)
 	} else if name == "container_nics" {
 		c.ContainerNicsIDs = append(c.ContainerNicsIDs, IDs...)
-	} else if name == "container_links" {
-		c.ContainerLinksIDs = append(c.ContainerLinksIDs, IDs...)
+	} else if name == "container_publishes" {
+		c.ContainerPublishesIDs = append(c.ContainerPublishesIDs, IDs...)
 	} else if name == "container_volumes" {
 		c.ContainerVolumesIDs = append(c.ContainerVolumesIDs, IDs...)
 	} else {
@@ -306,12 +306,12 @@ func (c *Container) DeleteToManyIDs(name string, IDs []string) error {
 				}
 			}
 		}
-	} else if name == "container_links" {
+	} else if name == "container_publishes" {
 		for _, ID := range IDs {
-			for pos, oldID := range c.ContainerLinksIDs {
+			for pos, oldID := range c.ContainerPublishesIDs {
 				if ID == oldID {
 					// match, this ID must be removed
-					c.ContainerLinks = append(c.ContainerLinks[:pos], c.ContainerLinks[pos+1:]...)
+					c.ContainerPublishes = append(c.ContainerPublishes[:pos], c.ContainerPublishes[pos+1:]...)
 				}
 			}
 		}
