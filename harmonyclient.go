@@ -229,6 +229,13 @@ func (C *Client) get(url string, params map[string]string, response interface{})
 	return nil
 }
 
+// put will execute a put request
+func (C *Client) put(url string, params map[string]string, payload []byte, response interface{}) error {
+	body := bytes.NewReader(payload)
+	buf, err := C.request("PUT", url, params, body)
+	return C.handleResponse(url, buf, err, response)
+}
+
 // post will execute a post request
 func (C *Client) post(url string, params map[string]string, payload []byte, response interface{}) error {
 	body := bytes.NewReader(payload)
