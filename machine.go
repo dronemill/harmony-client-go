@@ -3,7 +3,7 @@ package harmonyclient
 import (
 	"errors"
 
-	"github.com/univedo/api2go/jsonapi"
+	"github.com/manyminds/api2go/jsonapi"
 )
 
 // Machine holds a Harmony Machine

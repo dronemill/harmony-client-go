@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/univedo/api2go/jsonapi"
+	"github.com/manyminds/api2go/jsonapi"
 )
 
 func init() {
