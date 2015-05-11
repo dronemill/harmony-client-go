@@ -80,6 +80,72 @@ func (C *Client) Containers() (*[]Container, error) {
 	return &containers, err
 }
 
+// ContainerEnv gets an env resource by ID
+func (C *Client) ContainerEnv(ID string) (*ContainerEnv, error) {
+	m := map[string]string{}
+
+	response := new(map[string]interface{})
+	if err := C.get(fmt.Sprintf("/container_envs/%s", ID), m, response); err != nil {
+		return nil, err
+	}
+
+	if err := (*response)["errors"]; err != nil {
+		err := err.([]interface{})
+		e := err[0].(map[string]interface{})
+
+		return nil, fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
+	}
+
+	var env ContainerEnv
+	err := jsonapi.Unmarshal(*response, &env)
+
+	return &env, err
+}
+
+// ContainerDns gets an DNS resource by ID
+func (C *Client) ContainerDns(ID string) (*ContainerDns, error) {
+	m := map[string]string{}
+
+	response := new(map[string]interface{})
+	if err := C.get(fmt.Sprintf("/container_dns/%s", ID), m, response); err != nil {
+		return nil, err
+	}
+
+	if err := (*response)["errors"]; err != nil {
+		err := err.([]interface{})
+		e := err[0].(map[string]interface{})
+
+		return nil, fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
+	}
+
+	var dns ContainerDns
+	err := jsonapi.Unmarshal(*response, &dns)
+
+	return &dns, err
+}
+
+// ContainerVolume gets a volume resource by ID
+func (C *Client) ContainerVolume(ID string) (*ContainerVolume, error) {
+	m := map[string]string{}
+
+	response := new(map[string]interface{})
+	if err := C.get(fmt.Sprintf("/container_volumes/%s", ID), m, response); err != nil {
+		return nil, err
+	}
+
+	if err := (*response)["errors"]; err != nil {
+		err := err.([]interface{})
+		e := err[0].(map[string]interface{})
+
+		return nil, fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
+	}
+
+	var dns ContainerVolume
+	err := jsonapi.Unmarshal(*response, &dns)
+
+	return &dns, err
+}
+
 // Machines gets a list of all the machines
 func (C *Client) Machines() (*[]Machine, error) {
 	m := map[string]string{}
