@@ -8,17 +8,20 @@ import (
 
 // Container is a generic database user
 type Container struct {
-	ID         string `jsonapi:"name=id"`
-	MachineID  string `jsonapi:"name=machine_id"`
-	CID        string `jsonapi:"name=cid"`
-	Name       string `jsonapi:"name=name"`
-	Hostname   string `jsonapi:"name=hostname"`
-	Restart    string `jsonapi:"name=restart"`
-	Image      string `jsonapi:"name=image"`
-	EntryPoint string `jsonapi:"name=entry_point"`
-	Enabled    bool   `jsonapi:"name=enabled"`
-	CreatedAt  string `jsonapi:"name=created_at"`
-	UpdatedAt  string `jsonapi:"name=updated_at"`
+	ID          string `jsonapi:"name=id"`
+	MachineID   string `jsonapi:"name=machine_id"`
+	CID         string `jsonapi:"name=cid"`
+	Name        string `jsonapi:"name=name"`
+	Hostname    string `jsonapi:"name=hostname"`
+	Restart     string `jsonapi:"name=restart"`
+	Image       string `jsonapi:"name=image"`
+	EntryPoint  string `jsonapi:"name=entry_point"`
+	Cmd         string `jsonapi:"name=cmd"`
+	Tty         bool   `jsonapi:"name=enabled"`
+	Interactive bool   `jsonapi:"name=interactive"`
+	Enabled     bool   `jsonapi:"name=enabled"`
+	CreatedAt   string `jsonapi:"name=created_at"`
+	UpdatedAt   string `jsonapi:"name=updated_at"`
 
 	ContainerDns          []ContainerDns     `json:"-"`
 	ContainerDnsIDs       []string           `json:"-"`

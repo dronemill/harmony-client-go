@@ -199,6 +199,40 @@ func (C *Client) ContainersAdd(c *Container) (*Container, error) {
 	return &container, err
 }
 
+// FIXME: ref to json-api/json-api#588
+// ContainersCIDUpdate will update a container with the propper cID
+func (C *Client) ContainersCIDUpdate(containerID, cID string) error {
+	var data map[string]map[string]interface{}
+	data = make(map[string]map[string]interface{})
+	data["data"] = make(map[string]interface{})
+	data["data"]["id"] = containerID
+	data["data"]["type"] = "containers"
+	data["data"]["cid"] = cID
+
+	// marshal the resource
+	payload, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	// execute the request
+	m := map[string]string{}
+	response := new(map[string]interface{})
+	if err := C.put(fmt.Sprintf("/containers/%s", containerID), m, payload, response); err != nil {
+		return err
+	}
+
+	// handle api errors
+	if err := (*response)["errors"]; err != nil {
+		err := err.([]interface{})
+		e := err[0].(map[string]interface{})
+
+		return fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
+	}
+
+	return nil
+}
+
 // MachineByName will fetch a machine by its name
 func (C *Client) MachineByName(name string) (*Machine, error) {
 	// setup the filters
