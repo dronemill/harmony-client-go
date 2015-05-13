@@ -8,12 +8,13 @@ import (
 
 // Machine holds a Harmony Machine
 type Machine struct {
-	ID        string `jsonapi:"name=id"`
-	Name      string `jsonapi:"name=name"`
-	Hostname  string `jsonapi:"name=hostname"`
-	IP        string `jsonapi:"name=ip"`
-	CreatedAt string `jsonapi:"name=created_at"`
-	UpdatedAt string `jsonapi:"name=updated_at"`
+	ID           string `jsonapi:"name=id"`
+	Name         string `jsonapi:"name=name"`
+	Hostname     string `jsonapi:"name=hostname"`
+	IP           string `jsonapi:"name=ip"`
+	Es_client_id string `jsonapi:"name=es_client_id"`
+	CreatedAt    string `jsonapi:"name=created_at"`
+	UpdatedAt    string `jsonapi:"name=updated_at"`
 
 	Containers   []Container `json:"-"`
 	ContainerIDs []string    `json:"-"`
