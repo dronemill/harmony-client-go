@@ -233,6 +233,39 @@ func (C *Client) ContainersCIDUpdate(containerID, cID string) error {
 	return nil
 }
 
+// MachinesEsClientIdUpdate will update a machine's es_client_id
+func (C *Client) MachinesEsClientIdUpdate(machineID, es_client_id string) error {
+	var data map[string]map[string]interface{}
+	data = make(map[string]map[string]interface{})
+	data["data"] = make(map[string]interface{})
+	data["data"]["id"] = machineID
+	data["data"]["type"] = "machines"
+	data["data"]["es_client_id"] = es_client_id
+
+	// marshal the resource
+	payload, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	// execute the request
+	m := map[string]string{}
+	response := new(map[string]interface{})
+	if err := C.put(fmt.Sprintf("/machines/%s", machineID), m, payload, response); err != nil {
+		return err
+	}
+
+	// handle api errors
+	if err := (*response)["errors"]; err != nil {
+		err := err.([]interface{})
+		e := err[0].(map[string]interface{})
+
+		return fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
+	}
+
+	return nil
+}
+
 // MachineByName will fetch a machine by its name
 func (C *Client) MachineByName(name string) (*Machine, error) {
 	// setup the filters
