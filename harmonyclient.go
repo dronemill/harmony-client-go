@@ -57,6 +57,37 @@ func (C *Client) Container(ID string) (*Container, error) {
 	return &container, err
 }
 
+// ContainerByName will fetch a container by its name
+func (C *Client) ContainerByName(name string) (*Container, error) {
+	// setup the filters
+	m := map[string]string{}
+	m["name"] = name
+
+	// execute the request
+	response := new(map[string]interface{})
+	if err := C.get("/containers", m, response); err != nil {
+		return nil, err
+	}
+
+	// handle api errors
+	if err := (*response)["errors"]; err != nil {
+		err := err.([]interface{})
+		e := err[0].(map[string]interface{})
+
+		return nil, fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
+	}
+
+	if len((*response)["data"].([]interface{})) == 0 {
+		return nil, nil
+	}
+
+	// unmarshal the response
+	var container Container
+	err := jsonapi.Unmarshal(*response, &container)
+
+	return &container, err
+}
+
 // Containers gets a list of all the containers
 func (C *Client) Containers() (*[]Container, error) {
 	m := map[string]string{}
@@ -146,29 +177,6 @@ func (C *Client) ContainerVolume(ID string) (*ContainerVolume, error) {
 	return &dns, err
 }
 
-// Machines gets a list of all the machines
-func (C *Client) Machines() (*[]Machine, error) {
-	m := map[string]string{}
-
-	response := new(map[string]interface{})
-	if err := C.get("/machines", m, response); err != nil {
-		return nil, err
-	}
-
-	if err := (*response)["errors"]; err != nil {
-		err := err.([]interface{})
-		e := err[0].(map[string]interface{})
-
-		return nil, fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
-	}
-
-	// fmt.Printf("\n\nHERE: %+v\n\n\n", response)
-	var machines []Machine
-	err := jsonapi.Unmarshal(*response, &machines)
-
-	return &machines, err
-}
-
 // ContainersAdd will create a new Container resource
 func (C *Client) ContainersAdd(c *Container) (*Container, error) {
 	// marshal the resource
@@ -233,6 +241,45 @@ func (C *Client) ContainersCIDUpdate(containerID, cID string) error {
 	return nil
 }
 
+// FIXME
+// FIXME  All of this copy and paste is not okay.
+// FIXME    need to find a better way to do this. @pmccarren
+// FIXME
+
+// FIXME: ref to json-api/json-api#588
+// ContainersEnabledUpdate will update a container's enabled state
+func (C *Client) ContainersEnabledUpdate(containerID string, enabled bool) error {
+	var data map[string]map[string]interface{}
+	data = make(map[string]map[string]interface{})
+	data["data"] = make(map[string]interface{})
+	data["data"]["id"] = containerID
+	data["data"]["type"] = "containers"
+	data["data"]["enabled"] = enabled
+
+	// marshal the resource
+	payload, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	// execute the request
+	m := map[string]string{}
+	response := new(map[string]interface{})
+	if err := C.put(fmt.Sprintf("/containers/%s", containerID), m, payload, response); err != nil {
+		return err
+	}
+
+	// handle api errors
+	if err := (*response)["errors"]; err != nil {
+		err := err.([]interface{})
+		e := err[0].(map[string]interface{})
+
+		return fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
+	}
+
+	return nil
+}
+
 // MachinesEsClientIdUpdate will update a machine's es_client_id
 func (C *Client) MachinesEsClientIdUpdate(machineID, es_client_id string) error {
 	var data map[string]map[string]interface{}
@@ -266,6 +313,29 @@ func (C *Client) MachinesEsClientIdUpdate(machineID, es_client_id string) error 
 	return nil
 }
 
+// Machines gets a list of all the machines
+func (C *Client) Machines() (*[]Machine, error) {
+	m := map[string]string{}
+
+	response := new(map[string]interface{})
+	if err := C.get("/machines", m, response); err != nil {
+		return nil, err
+	}
+
+	if err := (*response)["errors"]; err != nil {
+		err := err.([]interface{})
+		e := err[0].(map[string]interface{})
+
+		return nil, fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
+	}
+
+	// fmt.Printf("\n\nHERE: %+v\n\n\n", response)
+	var machines []Machine
+	err := jsonapi.Unmarshal(*response, &machines)
+
+	return &machines, err
+}
+
 // MachineByName will fetch a machine by its name
 func (C *Client) MachineByName(name string) (*Machine, error) {
 	// setup the filters
@@ -284,6 +354,10 @@ func (C *Client) MachineByName(name string) (*Machine, error) {
 		e := err[0].(map[string]interface{})
 
 		return nil, fmt.Errorf("[%d] %s", int(e["status"].(float64)), e["title"])
+	}
+
+	if len((*response)["data"].([]interface{})) == 0 {
+		return nil, nil
 	}
 
 	// unmarshal the response
@@ -430,7 +504,13 @@ func (C *Client) handleResponse(url string, payload []byte, err error, unmarshal
 		return fmt.Errorf("Failed requesting %s: %s", url, err)
 	}
 
-	// fmt.Printf("%s\n\n", string(payload))
+	// fmt.Printf("%d %s\n\n", len(payload), string(payload))
+
+	// if we didnt get a response body, then dont attempt to jsonDecode it
+	if len(payload) == 0 {
+		unmarshalInto = nil
+		return nil
+	}
 
 	// decode the json, checking for errors if they exist
 	err = json.Unmarshal(payload, unmarshalInto)
